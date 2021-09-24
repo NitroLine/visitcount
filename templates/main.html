@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+    <title>Visitouter</title>
+</head>
+<body>
+<nav class="navbar is-warning" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a class="navbar-item" href="/">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/V-logo.svg/1200px-V-logo.svg.png" alt="V" width="30" height="40">
+    </a>
+      <h3 class="title mt-1">Visitouter</h3>
+  </div>
+</nav>
+<div class="container is-fluid is-fullwidth">
+<div class="content mx-3 mt-3 ">
+    <p>Visitouter - adaptive visit counter</p>
+
+     <div class='field'>
+        <div>
+                 <p class=''>Paste this code to your site</p>
+        </div>
+        <div class='field-body'>
+          <div class='field '>
+            <input class='input' id='roomURL' size='60' value='<iframe src="{{url}}" width="100px" height="30px" frameborder="no" scrolling="no"></iframe>'>
+          </div>
+        </div>
+          <button class="  mt-3 button is-warning" onclick="document.querySelector('#roomURL').select();document.execCommand('copy');">Click to copy </button>
+
+     </div>
+</div>
+    </div>
+</body>
+</html>
