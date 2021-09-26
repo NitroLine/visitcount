@@ -6,7 +6,7 @@
     <title>Visitouter</title>
 </head>
 <body class="has-background-info">
-<p class="mx-2"><big>{{visitors_count}}</big> Visits</p>
+<p class="mx-2">{% if error %} {{error}} {% endif %}<big> {{visitors_count}}  </big> Visits</p>
 
 </body>
 </html>
