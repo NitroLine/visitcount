@@ -1,9 +1,11 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, url_for, jsonify
 from urllib.parse import urlparse
-from .storage import RedisStorage
+from .storage import RedisStorage, DictStorage
+from flask_cors import CORS, cross_origin
 app = Flask(__name__)
-database = RedisStorage({'host':'localhost', 'db':0})
-
+database = DictStorage({'host':'localhost', 'db':0})
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 @app.route('/counter', methods=['GET', 'POST'])
 def counter_page():
@@ -27,4 +29,15 @@ def test_page():
 
 @app.route('/')
 def main_page():
-    return render_template("main.html", url=f'http{"s" if request.is_secure else ""}://{request.host}/counter')
+    js_url = f'http{"s" if request.is_secure else ""}://{request.host}{url_for("static", filename="js/counter.js")}'
+    return render_template("main.html", url=js_url)
+
+
+@app.route('/api/counter', methods=['POST'])
+@cross_origin()
+def counter():
+    json = request.json
+    print(json)
+    print(request.remote_addr)
+    print(request.url)
+    return jsonify(success=True)

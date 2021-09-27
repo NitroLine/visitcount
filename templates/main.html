@@ -13,6 +13,7 @@
     </a>
       <h3 class="title mt-1">Visitouter</h3>
   </div>
+    <div class="navbar-item"><a href="/test" class="button is-primary">Testing</a></div>
 </nav>
 <div class="container is-fluid is-fullwidth">
 <div class="content mx-3 mt-3 ">
@@ -24,7 +25,7 @@
         </div>
         <div class='field-body'>
           <div class='field '>
-            <input class='input' id='roomURL' size='60' value='<iframe src="{{url}}" width="100px" height="30px" frameborder="no" scrolling="no"></iframe>'>
+            <input class='input' id='roomURL' size='60' value='<script src="{{url}}" id="counter_scripts"></script>'>
           </div>
         </div>
           <button class="  mt-3 button is-warning" onclick="document.querySelector('#roomURL').select();document.execCommand('copy');">Click to copy </button>

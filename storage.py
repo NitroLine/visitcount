@@ -45,7 +45,7 @@ class RedisStorage(BaseStorage):
 
 
 class DictStorage:
-    def __init__(self):
+    def __init__(self, config):
         self.storage = dict()
 
     def origin_exists(self, origin):
