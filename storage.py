@@ -1,6 +1,7 @@
 import sqlite3
 import redis
-
+import time
+from .config import SESSION_TIMEOUT
 
 class BaseStorage:
     def origin_exists(self, origin):
@@ -25,11 +26,14 @@ class BaseStorage:
 
 
 class VisitInfo:
-    def __init__(self, origin, client_id, path, referer):
+    def __init__(self, origin, client_id, path, referer, browser, language, platform):
         self.origin = origin
         self.client_id = client_id
         self.path = path
         self.referer = referer
+        self.browser = browser
+        self.language = language
+        self.platform = platform
 
 
 class RedisStorage:
@@ -37,15 +41,28 @@ class RedisStorage:
         self.redis = redis.Redis(**config)
 
     def add_information(self, visit_info: VisitInfo):
-        self.redis.sadd(f'{visit_info.origin}:{visit_info.client_id}', visit_info.path)
         self.redis.sadd(f'{visit_info.origin}:clients:{visit_info.path}', visit_info.client_id) #
         self.redis.sadd(f'{visit_info.origin}:clients', visit_info.client_id) #
         self.redis.sadd(f'{visit_info.origin}:paths', visit_info.path) #
         self.redis.hincrby('visits', visit_info.origin) #
         self.redis.hincrby(f'{visit_info.origin}:paths_visits', visit_info.path) #
+        if visit_info.browser:
+            self.redis.hincrby(f'{visit_info.origin}:browsers', visit_info.browser)
+        if visit_info.language:
+            self.redis.hincrby(f'{visit_info.origin}:languages', visit_info.language)
+        if visit_info.platform:
+            self.redis.hincrby(f'{visit_info.origin}:platforms', visit_info.platform)
         if len(visit_info.referer) > 0:
             self.redis.sadd(f'{visit_info.origin}:referer:{visit_info.path}', visit_info.referer)
             self.redis.hincrby(f'{visit_info.origin}:referers_count', visit_info.referer)
+        last_session = self.redis.hget(f'{visit_info.origin}:clients_session', visit_info.client_id)
+        if last_session and time.time() - float(last_session.decode()) > SESSION_TIMEOUT:
+            deep = len(self.redis.sscan(f'{visit_info.origin}:{visit_info.client_id}')[1])
+            self.redis.hincrby(f'{visit_info.origin}:count_deep_visit', deep)
+            self.redis.delete(f'{visit_info.origin}:{visit_info.client_id}')
+            self.redis.sadd(f'{visit_info.origin}:{visit_info.client_id}', visit_info.path)
+        self.redis.hset(f'{visit_info.origin}:clients_session', visit_info.client_id, time.time())
+
 
     def get_all_clients(self, origin):
         return [i.decode() for i in self.redis.sscan(f'{origin}:clients')[1]]
@@ -53,12 +70,33 @@ class RedisStorage:
     def get_all_paths(self, origin):
         return [i.decode() for i in self.redis.sscan(f'{origin}:paths')[1]]
 
+    def get_browser_stats(self, origin):
+        return dict((browser.decode(), count.decode()) for browser, count in self.redis.hscan(f'{origin}:browsers')[1].items())
+
+    def get_language_stats(self, origin):
+        return dict((lang.decode(), count.decode()) for lang, count in self.redis.hscan(f'{origin}:languages')[1].items())
+
+    def get_platforms_stats(self, origin):
+        return dict((platform.decode(), count.decode()) for platform, count in self.redis.hscan(f'{origin}:platforms')[1].items())
+
     def get_all_origins(self):
         return [i.decode() for i in self.redis.hscan('visits')[1]]
 
     def get_total_visits(self, origin):
         visits = self.redis.hget('visits', origin)
         return 0 if visits is None else visits.decode()
+
+    def get_average_deep_of_visits(self, origin):
+        sum = 0
+        count = 0
+        data = self.redis.hscan(f'{origin}:count_deep_visit')[1]
+        for i in data:
+            c = int(data[i].decode())
+            sum += int(i.decode()) * c
+            count += c
+        if count == 0:
+            return 0
+        return sum / count
 
     def get_origin_statistics(self, origin):
         clients = self.get_all_clients(origin)
@@ -84,7 +122,10 @@ class RedisStorage:
             "total_visits": self.get_total_visits(origin),
             "paths_stats":paths_stats,
             'total_refer_stats': total_referer_stats,
-            'all_origins': self.get_all_origins()
+            'average_visits_deep': self.get_average_deep_of_visits(origin),
+            'browsers_stats':self.get_browser_stats(origin),
+            'platform_stats':self.get_platforms_stats(origin),
+            'language_stats':self.get_language_stats(origin)
         }
 
 

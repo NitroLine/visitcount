@@ -2,8 +2,9 @@ from flask import Flask, request, render_template, url_for, jsonify
 from urllib.parse import urlparse
 from .storage import RedisStorage, DictStorage, VisitInfo
 from flask_cors import CORS, cross_origin
+from .config import DATABASE_PARAMS
 app = Flask(__name__)
-database = RedisStorage({'host':'localhost', 'db':0, 'password': '123'})
+database = RedisStorage(DATABASE_PARAMS)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
@@ -20,8 +21,11 @@ def main_page():
     js_url = f'http{"s" if request.is_secure else ""}://{request.host}{url_for("static", filename="js/counter.js")}'
     return render_template("main.html", url=js_url)
 
+@app.route('/origins/')
+def get_all_origins():
+    return jsonify(database.get_all_origins())
 
-@app.route('/statistics/<origin>')
+@app.route('/stats/<origin>')
 def statistics_page(origin):
     stats = database.get_origin_statistics(origin)
     print(stats)
@@ -35,7 +39,9 @@ def counter():
     print(json)
     print(request.remote_addr)
     print(request.url)
-    info = VisitInfo(json['origin'], json['client_id'], json['path'], json['referer'])
+    info = VisitInfo(json['origin'], json['client_id'], json['path'], json['referer'], request.user_agent.browser,
+                     request.accept_languages.best, request.user_agent.platform)
+    print(request.user_agent.browser, request.accept_languages.best, request.user_agent.platform)
     database.add_information(info)
     return jsonify(success=True)
 
