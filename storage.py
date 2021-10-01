@@ -1,7 +1,7 @@
-import sqlite3
 import redis
 import time
 from .config import SESSION_TIMEOUT
+
 
 class BaseStorage:
     def origin_exists(self, origin):
@@ -63,7 +63,6 @@ class RedisStorage:
             self.redis.sadd(f'{visit_info.origin}:{visit_info.client_id}', visit_info.path)
         self.redis.hset(f'{visit_info.origin}:clients_session', visit_info.client_id, time.time())
 
-
     def get_all_clients(self, origin):
         return [i.decode() for i in self.redis.sscan(f'{origin}:clients')[1]]
 
@@ -90,6 +89,7 @@ class RedisStorage:
         sum = 0
         count = 0
         data = self.redis.hscan(f'{origin}:count_deep_visit')[1]
+        print(data)
         for i in data:
             c = int(data[i].decode())
             sum += int(i.decode()) * c
