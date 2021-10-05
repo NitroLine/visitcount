@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+        <link rel="stylesheet" href="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+    <script src="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+    <title>Visitouter | Graphs</title>
+</head>
+<body>
+<nav class="navbar is-warning" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a class="navbar-item" href="/">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/V-logo.svg/1200px-V-logo.svg.png" alt="V" width="30" height="40">
+    </a>
+      <h3 class="title mt-1">Visitouter</h3>
+  </div>
+    <div class="navbar-item"><a href="/test" class="button is-primary">Testing</a></div>
+    <div class="navbar-item"><a href="/test2" class="button is-primary">Testing 2</a></div>
+    <div class="navbar-item"><a href="/graphics" class="button is-primary">Graphics</a></div>
+</nav>
+<div class="container is-fluid is-fullwidth">
+<div class="content mx-3 mt-3 ">
+  <form  id="param_form">
+        <div class="control">
+            <label for="queryOrigin" class="is-size-5">Calculate graphic for:</label>
+            <div class="select ">
+                <select id="queryOrigin" name="origin"><option value="None" selected>None</option>
+                </select>
+            </div>
+        </div>
+    <div class="control">
+            <label for="queryStartDate"  class="is-size-5">Start date of graphics</label>
+            <input class="input" type="date" id="queryStartDate" name="start_date">
+        </div>
+            <div class="control">
+            <label for="queryEndDate" class="is-size-5">End date of graphics</label>
+            <input class="input" type="date" id="queryEndDate" name="end_date">
+        </div>
+        </form>
+    <button class="button is-primary mt-5" onclick="getDataAndBuildGraphics()">Request for data</button>
+<div class="ct-chart ct-perfect-fourth mt-5"></div>
+</div>
+
+    </div>
+</body>
+<script
+        src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+        crossorigin="anonymous"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/graphics.js') }}"></script>
+</html>

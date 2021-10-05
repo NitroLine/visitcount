@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, url_for, jsonify
-from .storage import RedisStorage, DictStorage, VisitInfo
+from .storage import RedisStorage, VisitInfo
 from flask_cors import CORS, cross_origin
+import datetime as dt
 from .config import DATABASE_PARAMS
 app = Flask(__name__)
 database = RedisStorage(DATABASE_PARAMS)
@@ -29,9 +30,27 @@ def get_all_origins():
     return jsonify(database.get_all_origins())
 
 
-@app.route('/stats/<origin>')
-def statistics_page(origin):
-    stats = database.get_origin_statistics(origin)
+@app.route('/graphics')
+def statistics_page():
+    return render_template("graphic_stats.html")
+
+
+@app.route('/stats/<origin>/', methods=['POST'])
+def statistics_at_interval(origin):
+    json = request.json
+    start_date = dt.datetime.strptime(json['start_date'], '%Y-%m-%d')
+    end_date = dt.datetime.strptime(json['start_date'], '%Y-%m-%d')
+    result_data = []
+    while start_date <= end_date:
+        result_data.append(database.get_origin_statistics_at_date(origin, str(start_date.date())))
+        start_date += dt.timedelta(days=1)
+    return jsonify(result_data)
+
+
+@app.route('/stats/<origin>/<date>')
+def statistics_at_date(origin, date):
+    print(origin, date)
+    stats = database.get_origin_statistics_at_date(origin, date)
     print(stats)
     return jsonify(stats)
 
@@ -42,5 +61,6 @@ def counter():
     json = request.json
     info = VisitInfo(json['origin'], json['client_id'], json['path'], json['referer'], request.user_agent.browser,
                      request.accept_languages.best, request.user_agent.platform)
+    print(info)
     database.add_information(info)
     return jsonify(success=True)
