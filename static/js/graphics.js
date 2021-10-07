@@ -38,7 +38,7 @@ function getOrigins(){
 async function getDataAndBuildGraphics(){
     let form = $('#param_form').get()[0]
     if (form.origin.value == 'None' || form.start_date.value.length == 0 || form.end_date.value == 0 ) {
-        console.log("Incorrect data");
+        showErrorAt("Fill all form field")
         return;
     }
     console.log(form.origin.value, form.start_date.value, form.end_date.value);
@@ -47,38 +47,84 @@ async function getDataAndBuildGraphics(){
     let origin = form.origin.value;
     if (start_date > end_date)
     {
-       console.log("Incorrect data");
+       showErrorAt("End date must be greater then end date")
        return;
     }
     let dates = [];
+    let language_stats = {};
+    let platform_stats = {};
     let total_clients_series = [];
     let total_visits_series = [];
+    $("#loader").removeClass("is-hidden");
     while (start_date <= end_date){
         let data = await apiRequestDataOnDate(origin, start_date.toISOString().split('T')[0])
         console.log(data)
         dates.push(start_date.toISOString().split('T')[0])
         total_clients_series.push(data.total_clients)
         total_visits_series.push(data.total_visits)
+        for (let lang in data.language_stats){
+            if (!language_stats[lang])
+                language_stats[lang] = 0;
+            language_stats[lang] +=1;
+        }
+        for (let platform in data.platform_stats){
+            if (!platform_stats[platform])
+                platform_stats[platform] = 0;
+            platform_stats[platform] +=1;
+        }
         start_date =  start_date.addDays(1);
     }
-    buildGraphic(dates, total_visits_series);
+    console.log(platform_stats)
+    console.log(language_stats)
+    $("#loader").addClass("is-hidden");
+    buildGraphic('#visits_chart',dates, total_visits_series);
+    buildGraphic('#visitors_chart',dates, total_clients_series);
+    buildCircleGraphic('#platforms_chart', platform_stats);
+    buildCircleGraphic('#language_chart', language_stats);
     // apiRequestData(form.origin.value, form.start_date.value, form.end_date.value)
 }
 
-function buildGraphic(dates, series){
-var data = {
-  // A labels array that can contain any sort of values
-  labels: dates,
-  // Our series array that contains series objects or in this case series data arrays
-  series: [
-    series
-  ]
-};
+let errorPlace = $('#error_place');
+function showErrorAt(error, obj=errorPlace){
+    console.error(error);
+    obj.find('.error').remove();
+    obj.append($(`<p class="error has-text-danger has-background-danger-light">Error: ${error}</p>`));
+}
 
-// Create a new line chart object where as first parameter we pass in a selector
-// that is resolving to our chart container element. The Second parameter
-// is the actual data object.
-new Chartist.Line('.ct-chart', data);
+function buildGraphic(id, dates, series){
+    var data = {
+      labels: dates,
+      lineSmooth: false,
+      axisY: {
+        type: Chartist.FixedScaleAxis,
+        onlyInteger: true
+      },
+      series: [
+        series
+      ],
+      fullWidth: true,
+    };
+    new Chartist.Line(id, data);
+}
+
+function buildCircleGraphic(id, data_obj){
+    let labels = [];
+    let series = [];
+    for (key in data_obj) {
+      labels.push(key);
+      series.push(data_obj[key]);
+    }
+    var data = {
+      labels: labels,
+      series: series
+    };
+    new Chartist.Pie(id, data, {
+      donut: true,
+      donutWidth: 60,
+      donutSolid: true,
+      startAngle: 270,
+      showLabel: true
+    });
 }
 
 document.addEventListener("DOMContentLoaded", getOrigins);

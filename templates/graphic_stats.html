@@ -10,6 +10,7 @@
 <body>
 <nav class="navbar is-warning" role="navigation" aria-label="main navigation">
   <div class="navbar-brand">
+
     <a class="navbar-item" href="/">
       <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/V-logo.svg/1200px-V-logo.svg.png" alt="V" width="30" height="40">
     </a>
@@ -21,6 +22,8 @@
 </nav>
 <div class="container is-fluid is-fullwidth">
 <div class="content mx-3 mt-3 ">
+    <div id="error_place">
+</div>
   <form  id="param_form">
         <div class="control">
             <label for="queryOrigin" class="is-size-5">Calculate graphic for:</label>
@@ -39,7 +42,28 @@
         </div>
         </form>
     <button class="button is-primary mt-5" onclick="getDataAndBuildGraphics()">Request for data</button>
-<div class="ct-chart ct-perfect-fourth mt-5"></div>
+    <p class="button is-loading is-large is-fullwidth is-ghost is-hidden mt-5" id="loader">Loading</p>
+    <div class="content mx-3 mt-3 columns">
+<div class="column">
+    <p class="is-size-3">Total visits</p>
+<div class="ct-chart ct-minor-seventh mt-5" id="visits_chart"></div>
+</div>
+    <div class="column ">
+        <p class="is-size-3">Total clients</p>
+<div class="ct-chart ct-minor-seventh mt-5" id="visitors_chart"></div>
+    </div>
+</div>
+        <div class="content mx-3 mt-3 columns">
+<div class="column">
+    <p class="is-size-3">Platforms</p>
+<div class="ct-chart ct-minor-seventh mt-5" id="platforms_chart"></div>
+</div>
+    <div class="column ">
+        <p class="is-size-3">Languages</p>
+<div class="ct-chart ct-minor-seventh mt-5" id="language_chart"></div>
+    </div>
+</div>
+
 </div>
 
     </div>
