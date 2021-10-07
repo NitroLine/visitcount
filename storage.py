@@ -40,13 +40,19 @@ class RedisStorage:
         if len(visit_info.referer) > 0:
             self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:referer:{visit_info.path}', visit_info.referer)
             self.redis.hincrby(f'{visit_info.date}:{visit_info.origin}:referers_count', visit_info.referer)
+        self.recalculate_deep(visit_info)
+
+    def recalculate_deep(self, visit_info: VisitInfo):
         last_session = self.redis.hget(f'{visit_info.date}:{visit_info.origin}:clients_session', visit_info.client_id)
         if last_session and time.time() - float(last_session.decode()) > SESSION_TIMEOUT:
-            deep = len(self.redis.sscan(f'{visit_info.date}:{visit_info.origin}:{visit_info.client_id}')[1])
-            if deep > 0:
-                self.redis.hincrby(f'{visit_info.date}:{visit_info.origin}:count_deep_visit', deep)
-                self.redis.delete(f'{visit_info.date}:{visit_info.origin}:{visit_info.client_id}')
-            self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:{visit_info.client_id}', visit_info.path)
+            self.redis.delete(f'{visit_info.date}:{visit_info.origin}:{visit_info.client_id}')
+        deep_before = len(self.redis.sscan(f'{visit_info.date}:{visit_info.origin}:{visit_info.client_id}')[1])
+        self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:{visit_info.client_id}', visit_info.path)
+        deep = len(self.redis.sscan(f'{visit_info.date}:{visit_info.origin}:{visit_info.client_id}')[1])
+        if deep > deep_before:
+            self.redis.hincrby(f'{visit_info.date}:{visit_info.origin}:count_deep_visit', deep)
+            if deep_before > 0:
+                self.redis.hincrby(f'{visit_info.date}:{visit_info.origin}:count_deep_visit', deep_before, -1)
         self.redis.hset(f'{visit_info.date}:{visit_info.origin}:clients_session', visit_info.client_id, time.time())
 
     def get_all_clients(self, origin, date):
@@ -76,11 +82,13 @@ class RedisStorage:
         count = 0
         data = self.redis.hscan(f'{date}:{origin}:count_deep_visit')[1]
         for i in data:
-            c = int(data[i].decode())
-            sum += int(i.decode()) * c
-            count += c
+            number = int(i.decode())
+            if number > 0:
+                c = int(data[i].decode())
+                sum += number * c
+                count += c
         if count == 0:
-            return 1
+            return 0
         return sum / count
 
     def get_origin_statistics_at_date(self, origin, date):
