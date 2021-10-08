@@ -1,7 +1,6 @@
-
 DATABASE_PARAMS = {
-    'host':'localhost',
-    'db':0,
+    'host': 'localhost',
+    'db': 0,
     'password': 'supersecurityredispass'
 }
 

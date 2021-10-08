@@ -1,8 +1,11 @@
-from flask import Flask, request, render_template, url_for, jsonify
-from .storage import RedisStorage, VisitInfo
-from flask_cors import CORS, cross_origin
 import datetime as dt
+
+from flask import Flask, request, render_template, url_for, jsonify
+from flask_cors import CORS, cross_origin
+
 from .config import DATABASE_PARAMS
+from .storage import RedisStorage, VisitInfo
+
 app = Flask(__name__)
 database = RedisStorage(DATABASE_PARAMS)
 cors = CORS(app)

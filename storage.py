@@ -1,6 +1,8 @@
-import redis
-import time
 import datetime
+import time
+
+import redis
+
 from .config import SESSION_TIMEOUT
 
 
@@ -24,13 +26,13 @@ class RedisStorage:
         self.redis = redis.Redis(**config)
 
     def add_information(self, visit_info: VisitInfo):
-        self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:clients:{visit_info.path}', visit_info.client_id) #
-        self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:clients', visit_info.client_id) #
-        self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:paths', visit_info.path) #
-        self.redis.hincrby('visits', visit_info.origin) #
-        self.redis.hincrby(f'{visit_info.date}:visits', visit_info.origin) #
-        self.redis.sadd(f'dates', visit_info.date) #
-        self.redis.hincrby(f'{visit_info.date}:{visit_info.origin}:paths_visits', visit_info.path) #
+        self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:clients:{visit_info.path}', visit_info.client_id)
+        self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:clients', visit_info.client_id)
+        self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:paths', visit_info.path)
+        self.redis.hincrby('visits', visit_info.origin)
+        self.redis.hincrby(f'{visit_info.date}:visits', visit_info.origin)
+        self.redis.sadd(f'dates', visit_info.date)
+        self.redis.hincrby(f'{visit_info.date}:{visit_info.origin}:paths_visits', visit_info.path)  #
         if visit_info.browser:
             self.redis.hincrby(f'{visit_info.date}:{visit_info.origin}:browsers', visit_info.browser)
         if visit_info.language:
@@ -62,13 +64,16 @@ class RedisStorage:
         return [i.decode() for i in self.redis.sscan(f'{date}:{origin}:paths')[1]]
 
     def get_browser_stats(self, origin, date):
-        return dict((browser.decode(), count.decode()) for browser, count in self.redis.hscan(f'{date}:{origin}:browsers')[1].items())
+        return dict((browser.decode(), count.decode()) for browser, count in
+                    self.redis.hscan(f'{date}:{origin}:browsers')[1].items())
 
     def get_language_stats(self, origin, date):
-        return dict((lang.decode(), count.decode()) for lang, count in self.redis.hscan(f'{date}:{origin}:languages')[1].items())
+        return dict((lang.decode(), count.decode()) for lang, count in
+                    self.redis.hscan(f'{date}:{origin}:languages')[1].items())
 
     def get_platforms_stats(self, origin, date):
-        return dict((platform.decode(), count.decode()) for platform, count in self.redis.hscan(f'{date}:{origin}:platforms')[1].items())
+        return dict((platform.decode(), count.decode()) for platform, count in
+                    self.redis.hscan(f'{date}:{origin}:platforms')[1].items())
 
     def get_all_origins(self):
         return [i.decode() for i in self.redis.hscan('visits')[1]]
@@ -106,18 +111,17 @@ class RedisStorage:
             visits = self.redis.hget(f'{date}:{origin}:paths_visits', path)
             if visits is not None:
                 visits = visits.decode()
-            paths_stats[path] = { 'unic_visits': len(self.redis.sscan(f'{date}:{origin}:clients:{path}')[1]),
-                                  'visits': visits,
-                                  'refer' : referer_stats}
+            paths_stats[path] = {'unic_visits': len(self.redis.sscan(f'{date}:{origin}:clients:{path}')[1]),
+                                 'visits': visits,
+                                 'refer': referer_stats}
             total_referer_stats.update(referer_stats)
         return {
             "total_clients": len(clients),
             "total_visits": self.get_total_visits(origin, date),
-            "paths_stats":paths_stats,
+            "paths_stats": paths_stats,
             'total_refer_stats': total_referer_stats,
             'average_visits_deep': self.get_average_deep_of_visits(origin, date),
-            'browsers_stats':self.get_browser_stats(origin, date),
-            'platform_stats':self.get_platforms_stats(origin, date),
-            'language_stats':self.get_language_stats(origin, date)
+            'browsers_stats': self.get_browser_stats(origin, date),
+            'platform_stats': self.get_platforms_stats(origin, date),
+            'language_stats': self.get_language_stats(origin, date)
         }
-
