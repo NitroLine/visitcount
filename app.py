@@ -49,9 +49,7 @@ def statistics_at_interval(origin):
 
 @app.route('/stats/<origin>/<date>')
 def statistics_at_date(origin, date):
-    print(origin, date)
     stats = database.get_origin_statistics_at_date(origin, date)
-    print(stats)
     return jsonify(stats)
 
 
@@ -61,6 +59,5 @@ def counter():
     json = request.json
     info = VisitInfo(json['origin'], json['client_id'], json['path'], json['referer'], request.user_agent.browser,
                      request.accept_languages.best, request.user_agent.platform)
-    print(info)
     database.add_information(info)
     return jsonify(success=True)
