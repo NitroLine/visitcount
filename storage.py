@@ -26,25 +26,34 @@ class RedisStorage:
         self.redis = redis.Redis(**config)
 
     def add_information(self, visit_info: VisitInfo):
+        self.redis.sadd(f'dates', visit_info.date)
+        self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:paths', visit_info.path)
+        self._recalculate_visits_info(visit_info)
+        self._recalculate_clients_info(visit_info)
+        self._recalculate_referer_info(visit_info)
+        self._recalculate_deep(visit_info)
+
+    def _recalculate_referer_info(self, visit_info: VisitInfo):
+        if len(visit_info.referer) > 0:
+            self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:referer:{visit_info.path}', visit_info.referer)
+            self.redis.hincrby(f'{visit_info.date}:{visit_info.origin}:referers_count', visit_info.referer)
+
+    def _recalculate_clients_info(self, visit_info: VisitInfo):
         self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:clients:{visit_info.path}', visit_info.client_id)
         self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:clients', visit_info.client_id)
-        self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:paths', visit_info.path)
+
+    def _recalculate_visits_info(self, visit_info: VisitInfo):
         self.redis.hincrby('visits', visit_info.origin)
-        self.redis.hincrby(f'{visit_info.date}:visits', visit_info.origin)
-        self.redis.sadd(f'dates', visit_info.date)
         self.redis.hincrby(f'{visit_info.date}:{visit_info.origin}:paths_visits', visit_info.path)  #
+        self.redis.hincrby(f'{visit_info.date}:visits', visit_info.origin)
         if visit_info.browser:
             self.redis.hincrby(f'{visit_info.date}:{visit_info.origin}:browsers', visit_info.browser)
         if visit_info.language:
             self.redis.hincrby(f'{visit_info.date}:{visit_info.origin}:languages', visit_info.language)
         if visit_info.platform:
             self.redis.hincrby(f'{visit_info.date}:{visit_info.origin}:platforms', visit_info.platform)
-        if len(visit_info.referer) > 0:
-            self.redis.sadd(f'{visit_info.date}:{visit_info.origin}:referer:{visit_info.path}', visit_info.referer)
-            self.redis.hincrby(f'{visit_info.date}:{visit_info.origin}:referers_count', visit_info.referer)
-        self.recalculate_deep(visit_info)
 
-    def recalculate_deep(self, visit_info: VisitInfo):
+    def _recalculate_deep(self, visit_info: VisitInfo):
         last_session = self.redis.hget(f'{visit_info.date}:{visit_info.origin}:clients_session', visit_info.client_id)
         if last_session and time.time() - float(last_session.decode()) > SESSION_TIMEOUT:
             self.redis.delete(f'{visit_info.date}:{visit_info.origin}:{visit_info.client_id}')
