@@ -15,7 +15,8 @@ def test_2_page():
 
 @app.route('/')
 def main_page():
-    js_url = f'http{"s" if request.is_secure else ""}://{request.host}{url_for("static", filename="js/counter.js")}'
+    js_url = f'http{"s" if request.is_secure else ""}:/' \
+             f'/{request.host}{url_for("static", filename="js/counter.js")}'
     return render_template("main.html", url=js_url)
 
 

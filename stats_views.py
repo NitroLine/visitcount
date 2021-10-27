@@ -17,7 +17,9 @@ def statistics_at_interval(origin):
     end_date = dt.datetime.strptime(json['start_date'], '%Y-%m-%d')
     result_data = []
     while start_date <= end_date:
-        result_data.append(database.get_origin_statistics_at_date(origin, str(start_date.date())))
+        result_data.append(
+            database.get_origin_statistics_at_date(origin,
+                                                   str(start_date.date())))
         start_date += dt.timedelta(days=1)
     return jsonify(result_data)
 

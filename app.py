@@ -14,7 +14,9 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 @cross_origin()
 def counter():
     json = request.json
-    info = VisitInfo(json['origin'], json['client_id'], json['path'], json['referer'], request.user_agent.browser,
-                     request.accept_languages.best, request.user_agent.platform)
+    info = VisitInfo(json['origin'], json['client_id'], json['path'],
+                     json['referer'], request.user_agent.browser,
+                     request.accept_languages.best,
+                     request.user_agent.platform)
     database.add_information(info)
     return jsonify(success=True)
